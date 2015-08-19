@@ -1,0 +1,201 @@
+---
+title: "Reproducible Research - Peer Assessment 2"
+subtitle: "Analysis Report of Impact by Weather Events based on NOAA Storm Databases"
+author: "Miguel Luis Catalino"
+date: "August 9, 2015"
+output: html_document
+---
+##Synopsis
+
+This report show the damage in health and economic induced by weather events using data from 1950 to 2011 in the United State; using the NOAA database that contain the information about the every type of events occurred in every state and the number of fatalities and injuries, also the number of damage in the crops and properties.
+
+
+##Data Processing
+
+This area contain the data processing.
+
+###Libraries
+
+I'm using R.util for use the function bunzip2 to unzip the data.
+
+```{r librires, results="hide",message=FALSE}
+library(R.utils)
+```
+###Basic Settings
+First, We get sure that the file exist, otherwise It's downloaded and unzip it.
+
+```{r getting data, cache = TRUE}
+options(scipen = 1)
+filename = "data.csv.bz2"
+url = "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+list_dir <- dir(".")
+if (!"Data.csv.bz2" %in% list_dir) {
+download.file(url, destfile = filename)
+}
+if (!"data.csv" %in% list_dir) {
+bunzip2(filename, overwrite = T, remove = F)
+}
+data <- read.csv("data.csv")
+data.dim<-dim(data)
+```
+The number the raw data is `r data.dim[1]` and the number of columns is `r data.dim[2]`
+
+
+I summarize the data with only the fatalities, injuries, properties damage (PROPDMG), crop damage (CROPDMG), states and types of events (EVTYPE). Also I add the Count column to summarize the number of event that occurred.
+
+```{r summarize data}
+data$Count <- 1
+newdata <- aggregate(cbind(Count,FATALITIES,INJURIES,PROPDMG,CROPDMG) ~ STATE + EVTYPE,
+                    data,sum,na.rm = TRUE)
+newdata.dim<- dim(newdata)
+head(newdata)
+```
+Now the number of events is `r newdata.dim[1]` with just `r newdata.dim[2]` columns.
+
+Now, the number of event occurred is summarized by every type and ordered in decreasing order. The table show the top 10 events in the all USA and you can see that the most common event is Hail. 
+
+```{r total events}
+total_bytype <- aggregate(Count ~ EVTYPE,newdata,sum,na.rm = TRUE)
+total_bytype <- total_bytype[order(-total_bytype$Count),]
+total_bytype <- total_bytype[1:10,]
+head(total_bytype)
+```
+
+Summarize the injuries by type and ordered in decreasing order. The table show the top 10 events in all USA.
+
+```{r events by injuries}
+injuries_bytype<-aggregate(INJURIES~EVTYPE,newdata,sum,na.rm=TRUE)
+injuries_bytype<-injuries_bytype[order(-injuries_bytype$INJURIES),]
+injuries_bytype<-injuries_bytype[1:10,]
+head(injuries_bytype,10)
+```
+
+Sumamrize the injuries by type and state; and ordered in decreasing order. The table show the top 10 event and the state.
+
+```{r events by injuries and states}
+injuries_bystates<- aggregate(INJURIES~EVTYPE+STATE,newdata,sum,na.rm=TRUE)
+injuries_bystates<- injuries_bystates[order(-injuries_bystates$INJURIES),]
+injuries_bystates<- injuries_bystates[1:10,]
+head(injuries_bystates)
+```
+
+Summarize the fatalities by type and ordered in decreasing order. The table show the top 10 events in all USA.
+
+```{r events fatalities}
+fatalities_bytype<-aggregate(FATALITIES~EVTYPE,newdata,sum,na.rm=TRUE)
+fatalities_bytype<-fatalities_bytype[order(-fatalities_bytype$FATALITIES),]
+fatalities_bytype<-fatalities_bytype[1:10,]
+head(fatalities_bytype)
+```
+Sumamrize the fatalities by type and state; and ordered in decreasing order. The table show the top 10 event and the state.
+
+```{r events by fatalities and states}
+fatalities_bystate<- aggregate(FATALITIES~EVTYPE+STATE,newdata,sum,na.rm=TRUE)
+fatalities_bystate<- fatalities_bystate[order(-fatalities_bystate$FATALITIES),]
+fatalities_bystate<- fatalities_bystate[1:10,]
+head(fatalities_bystate)
+```
+
+Summarize the properties damage by type and ordered in decreasing order. The table show the top 10 events in all USA.
+
+```{r properties damage by type}
+properties_bytype<- aggregate(PROPDMG~EVTYPE,newdata,sum,na.rm=TRUE)
+properties_bytype<- properties_bytype[order(-properties_bytype$PROPDMG),]
+properties_bytype<- properties_bytype[1:10,]
+head(properties_bytype)
+```
+
+Sumamrize the properties damage by type and state; and ordered in decreasing order. The table show the top 10 event and the state.
+
+```{r properties damage by type and states }
+properties_bystate<-aggregate(PROPDMG~EVTYPE+STATE,newdata,sum,na.rm=TRUE)
+properties_bystate<-properties_bystate[order(-properties_bystate$PROPDMG),]
+properties_bystate<-properties_bystate[1:10,]
+head(properties_bystate)
+```
+
+Summarize the crops damage by type and ordered in decreasing order. The table show the top 10 events in all USA.
+
+```{r crop by type}
+crop_bytype<- aggregate(CROPDMG~EVTYPE,newdata,sum,na.rm=TRUE)
+crop_bytype<- crop_bytype[order(-crop_bytype$CROPDMG),]
+crop_bytype<- crop_bytype[1:10,]
+head(crop_bytype)
+```
+
+Sumamrize the crops damage by type and state; and ordered in decreasing order. The table show the top 10 event and the state.
+
+```{r crop by type and states}
+crop_bystate<-aggregate(CROPDMG~EVTYPE+STATE,newdata,sum,na.rm=TRUE)
+crop_bystate<-crop_bystate[order(-crop_bystate$CROPDMG),]
+crop_bystate<-crop_bystate[1:10,]
+head(crop_bystate)
+
+```
+
+##Results
+
+This plot show the top 10 event that happen in the USA.
+
+```{r plop count}
+barplot(total_bytype$Count,
+        names.arg = total_bytype$EVTYPE, 
+        space=0.5,
+        axes=TRUE,
+        axisnames=TRUE,
+         cex.names = 0.7,
+        las=3,
+        main = "Top 10 Events", col = "blue",
+        ylab = "Number of Ocurrences")
+```
+
+This plots show the top 10 events most healthy harmful in the USA.
+
+```{r plop health damage}
+par(mfrow=c(1,2), mar = c(12, 4, 3, 2), mgp = c(3, 1, 0), cex = 0.8)
+barplot(injuries_bytype$INJURIES,
+        names.arg = injuries_bytype$EVTYPE, 
+        space=0.5,
+        axes=TRUE,
+        axisnames=TRUE,
+         cex.names = 0.7,
+        las=3,
+        main = "Top 10 Events: Injuries", col = "blue",
+        ylab = "Number of Injuries")
+barplot(fatalities_bytype$FATALITIES,
+        names.arg = fatalities_bytype$EVTYPE, 
+        space=0.5,
+        axes=TRUE,
+        axisnames=TRUE,
+         cex.names = 0.7,
+        las=3,
+        main = "Top 10 Events: Fatalities", col = "blue",
+        ylab = "Number of Fatalities")
+```
+
+This plots show the top 10 most economic harmful events
+
+```{r plop economic damage}
+options(scipen = 1)
+par(mfrow=c(1,2), mar = c(12, 4, 3, 2), mgp = c(3, 1, 0), cex = 0.8)
+barplot(properties_bytype$PROPDMG,
+        names.arg = properties_bytype$EVTYPE, 
+        space=0.5,
+        axes=TRUE,
+        axisnames=TRUE,
+         cex.names = 0.7,
+        las=3,
+        main = "Top 10 Events: Properties Damage", col = "blue",
+        ylab = "Number of Properties Damage")
+barplot(crop_bytype$CROPDMG,
+        names.arg = crop_bytype$EVTYPE, 
+        space=0.5,
+        axes=TRUE,
+        axisnames=TRUE,
+         cex.names = 0.7,
+        las=3,
+        main = "Top 10 Events: Crop Damage", col = "blue",
+        ylab = "Number of Crop Damage")
+```
+
+As You can see in the previous plots and tables, the Tornado is the most harmful event, also is the one that causes most properties damage. But, the one that causes the most crops damage is the Hail.
